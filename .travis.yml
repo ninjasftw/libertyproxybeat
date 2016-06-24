@@ -6,11 +6,11 @@ go:
 sudo: false
 
 before_install:
-  # Redo the travis setup but with the radoondas/jmxproxybeat path. This is needed so the package path is correct
-  - mkdir -p $HOME/gopath/src/github.com/radoondas/jmxproxybeat
-  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/radoondas/jmxproxybeat/
-  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/radoondas/jmxproxybeat
-  - cd $HOME/gopath/src/github.com/radoondas/jmxproxybeat
+  # Redo the travis setup but with the ninjasftw/libertyproxybeat path. This is needed so the package path is correct
+  - mkdir -p $HOME/gopath/src/github.com/ninjasftw/libertyproxybeat
+  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/ninjasftw/libertyproxybeat/
+  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/ninjasftw/libertyproxybeat
+  - cd $HOME/gopath/src/github.com/ninjasftw/libertyproxybeat
 
 install:
   - make

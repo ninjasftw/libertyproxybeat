@@ -6,15 +6,15 @@ libertyproxybeat:
   # Defines how often an event is sent to the output
   period: 10s
 
-  urls: ["https://ut004101.bskyb.com:11443"]
+  urls: ["https://localhost:8443"]
 
    # Authentication
   authentication:
     username: "kso02"
     password: "jonsnow1!"
 
-  ssl:
-     cafile: "/home/karl/CVSWORK/websphere/was/scripts/def/ssl/CA.pem"
+  #ssl:
+  #   cafile: "/path/to/CA/file.pem"
 
   beans:
     - bean:
@@ -36,34 +36,6 @@ libertyproxybeat:
         - attribute:
           name: Heap
 
-#    - bean:
-#      name: java.lang:type=GarbageCollector,name=ConcurrentMarkSweep
-#      attributes:
-#        - attribute:
-#           name: CollectionCount
-#        - attribute:
-#           name: CollectionTime
-#        - attribute:
-#          name: LastGcInfo
-#          keys:
-#            - GcThreadCount
-#            - duration
-#            - endTime
-#            - id
-#    - bean:
-#      name: java.lang:type=GarbageCollector,name=ParNew
-#      attributes:
-#        - attribute:
-#           name: CollectionCount
-#        - attribute:
-#           name: CollectionTime
-#        - attribute:
-#          name: LastGcInfo
-#          keys:
-#            - GcThreadCount
-#            - duration
-#            - endTime
-#            - id
 
 ###############################################################################
 ############################# Libbeat Config ##################################

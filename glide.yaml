@@ -1,3 +1,3 @@
-package: github.com/radoondas/jmxproxybeat
+package: github.com/ninjasftw/libertyproxybeat
 import:
 - package: github.com/elastic/beats

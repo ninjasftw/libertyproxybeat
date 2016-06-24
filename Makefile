@@ -1,5 +1,5 @@
-BEATNAME=jmxproxybeat
-BEAT_DIR=github.com/radoondas
+BEATNAME=libertyproxybeat
+BEAT_DIR=github.com/ninjasftw
 SYSTEM_TESTS=false
 TEST_ENVIRONMENT=false
 ES_BEATS=./vendor/github.com/elastic/beats

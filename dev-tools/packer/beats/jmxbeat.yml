@@ -1,4 +1,4 @@
-beat_name: jmxproxybeat
-beat_url: 'https://github.com/radoondas'
-beat_repo: 'github.com/radoondas'
+beat_name: libertyproxybeat
+beat_url: 'https://github.com/ninjasftw'
+beat_repo: 'github.com/ninjasftw'
 beat_description: Sends JMX metrics from Tomcat JMXProxyServlet to Logstash or directly to Elasticsearch.
