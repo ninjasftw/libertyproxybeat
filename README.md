@@ -125,3 +125,6 @@ mkdir -p ${GOPATH}/github.com/ninjasftw
 cd ${GOPATH}/github.com/ninjasftw
 git clone https://github.com/ninjasftw/libertyproxybeat
 ```
+
+### Origins
+This project is based upon a fork of https://github.com/radoondas/jmxproxybeat that was created for retrieving JMX metrics from a Tomcat instance
