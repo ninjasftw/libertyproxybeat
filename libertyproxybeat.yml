@@ -10,8 +10,8 @@ libertyproxybeat:
 
    # Authentication
   authentication:
-    username: "kso02"
-    password: "jonsnow1!"
+    username: "admin"
+    password: "password"
 
   #ssl:
   #   cafile: "/path/to/CA/file.pem"
