@@ -4,10 +4,10 @@
 package config
 
 type Config struct {
-	Jmxproxybeat JmxproxybeatConfig
+	Libertyproxybeat LibertyproxybeatConfig
 }
 
-type JmxproxybeatConfig struct {
+type LibertyproxybeatConfig struct {
 	Ssl            SSLConfig            `yaml:"ssl"`
 	Period         string               `yaml:"period"`
 	URLs           []string             `yaml:"urls"`

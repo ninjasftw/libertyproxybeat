@@ -1,42 +1,32 @@
-[![Travis Build Status](https://travis-ci.org/radoondas/jmxproxybeat.svg?branch=master)](https://travis-ci.org/radoondas/jmxproxybeat)
-[![GoReportCard](https://goreportcard.com/badge/github.com/radoondas/jmxproxybeat)](https://goreportcard.com/report/github.com/radoondas/jmxproxybeat)
 
-# Jmxproxybeat
+# Libertyproxybeat
 
-**Welcome to Jmxproxybeat - simple beat for JMXProxyServlet for Apache Tomcat to retrieve JMX metrics.**
+**Welcome to Libertyproxybeat - beat that utilises IBMJMXConnectorREST to retrieve JMX metrics for a Websphere Liberty Profile Instance.**
 
 This is still **development version** and I expect changes based on feedback.
 
-This beat retrieves JMX metrics from running JVM of Apache Tomcat and sends them to Logstash or Elasticsearch.
+This beat retrieves JMX metrics from a running Liberty Profile instance and sends them to Logstash or Elasticsearch.
 JMX metrics are requested via 'JMX Proxy Servlet' configured and enabled in Tomcat for HTTP listener. JMX Proxy Servlet is a lightweight proxy to get and set the Tomcat internals.
 
-Because Jmxproxybeat is not using JAVA, it is lightweight on the system and there is no need for JAVA to get JMX metrics.
+## Liberty Profile configuration
 
-## Tomcat configuration
-General reading about Tomcat [JMX Proxy servlet](https://tomcat.apache.org/tomcat-8.0-doc/manager-howto.html#Using_the_JMX_Proxy_Servlet). 
-
-In order to enable JMX Proxy Servlet in default Tomcat package, minimal configuration in **conf/tomcat-users.xml** is required. Tomcat restart is also required.
+In order to enable the JMX url required by this beat the following features need to be added
 ```xml
-<role rolename="manager-jmx"/>
-<user username="tomcat" password="s3cret" roles="manager-jmx"/>
+        <feature>restConnector-1.0</feature>
+        <feature>monitor-1.0</feature>
 ```
 
-Test if your Tomcat configuration works with your credentials.
-
-Template scheme of the request of the Bean:
-```
-http://127.0.0.1:8080/manager/jmxproxy/?get=BEANNAME&att=MYATTRIBUTE&key=MYKEY
-```
+You must also setup a user with with the <administrator-role> tag
 
 Example of request for **HeapMemoryUsage**
 ```
-http://127.0.0.1:8080/manager/jmxproxy/?get=java.lang:type=Memory&att=HeapMemoryUsage&key=init
+http://127.0.0.1:8443/IBMJMXConnectorREST/mbeans/WebSphere%3Atype%3DJvmStats/attributes?attribute=UsedMemory
 ```
 
-## Getting Started with Jmxproxybeat
+## Getting Started with Libertyproxybeat
 
 Ensure that this folder is at the following location:
-`${GOPATH}/github.com/radoondas`
+`${GOPATH}/github.com/ninjasftw
 
 ### Requirements
 
@@ -45,7 +35,7 @@ Ensure that this folder is at the following location:
 
 ### Build
 
-To build the binary for Jmxproxybeat run the command below. This will generate a binary in the same directory with the name jmxproxybeat.
+To build the binary for Libertyproxybeat run the command below. This will generate a binary in the same directory with the name Libertyproxybeat.
 
 ```
 make
@@ -57,22 +47,22 @@ make
 To run Jmxproxybeat with debugging output enabled, run:
 
 ```
-./jmxproxybeat -c jmxproxybeat.yml -e -d "*"
+./Libertyproxybeat -c Libertyproxybeat.yml -e -d "*"
 ```
 
 ### Example JSON output
 ```
 {
-  "_index": "jmxproxybeat-2016.04.20",
+  "_index": "libertyproxybeat-2016.04.20",
   "_type": "jmx",
   "_id": "AVQ0FOGeegQ15caFDGZ7",
   "_score": null,
   "_source": {
     "@timestamp": "2016-04-20T14:31:03.385Z",
     "bean": {
-      "attribute": "MemoryUsed",
-      "hostname": "127.0.0.1:8080",
-      "name": "java.nio:type=BufferPool,name=direct",
+      "attribute": "usedMemory",
+      "hostname": "127.0.0.1:8443",
+      "name": "WebSphere:type=JvmStats",
       "value": 81920
     },
     "beat": {
@@ -83,37 +73,14 @@ To run Jmxproxybeat with debugging output enabled, run:
   }
 ```
 
-### Kibana example dashboard
-![JmxProxyBeat1](/docs/images/jmxproxybeat1.png)
-![JmxProxyBeat2](/docs/images/jmxproxybeat2.png)
-
-### Test - not complete yet
-
-To test Jmxproxybeat, run the following command:
-
-```
-make testsuite
-```
-
-alternatively:
-```
-make unit-tests
-make system-tests
-make integration-tests
-make coverage-report
-```
-
-The test coverage is reported in the folder `./build/coverage/`
-
-
 ### Package - not complete yet
 
-To be able to package Jmxproxybeat the requirements are as follows:
+To be able to package Libertyproxybeat the requirements are as follows:
 
  * [Docker Environment](https://docs.docker.com/engine/installation/) >= 1.10
  * $GOPATH/bin must be part of $PATH: `export PATH=${PATH}:${GOPATH}/bin`
 
-To cross-compile and package Jmxproxybeat for all supported platforms, run the following commands:
+To cross-compile and package Libertyproxybeat for all supported platforms, run the following commands:
 
 ```
 cd dev-tools/packer
@@ -126,7 +93,7 @@ make
 
 Each beat has a template for the mapping in elasticsearch and a documentation for the fields
 which is automatically generated based on `etc/fields.yml`.
-To generate etc/jmxproxybeat.template.json and etc/jmxproxybeat.asciidoc
+To generate etc/libertyproxybeat.template.json and etc/libertyproxybeat.asciidoc
 
 ```
 make update
@@ -135,7 +102,7 @@ make update
 
 ### Cleanup
 
-To clean  Jmxproxybeat source code, run the following commands:
+To clean  Libertyproxybeat source code, run the following commands:
 
 ```
 make fmt
@@ -154,7 +121,7 @@ make clean
 To clone Jmxproxybeat from the git repository, run the following commands:
 
 ```
-mkdir -p ${GOPATH}/github.com/radoondas
-cd ${GOPATH}/github.com/radoondas
-git clone https://github.com/radoondas/jmxproxybeat
+mkdir -p ${GOPATH}/github.com/ninjasftw
+cd ${GOPATH}/github.com/ninjasftw
+git clone https://github.com/ninjasftw/libertyproxybeat
 ```

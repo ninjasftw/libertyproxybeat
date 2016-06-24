@@ -6,23 +6,23 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"regexp"
+	//"regexp"
 	"strconv"
 	"strings"
 	"time"
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+    "encoding/json"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 )
 
 const (
-	managerJmxproxy = "/manager/jmxproxy/"
+	managerJmxproxy = "/IBMJMXConnectorREST/mbeans/"
 )
 
-func (bt *Jmxproxybeat) GetJMX(u url.URL) error {
+func (bt *Libertyproxybeat) GetJMX(u url.URL) error {
 	for i := 0; i < len(bt.Beans); i++ {
 		for j := 0; j < len(bt.Beans[i].Attributes); j++ {
 			if len(bt.Beans[i].Attributes[j].Keys) > 0 {
@@ -56,19 +56,14 @@ func (bt *Jmxproxybeat) GetJMX(u url.URL) error {
 	return nil
 }
 
-func (bt *Jmxproxybeat) GetJMXObject(u url.URL, name, attribute, key string, CAFile string) error {
+func (bt *Libertyproxybeat) GetJMXObject(u url.URL, name, attribute, key string, CAFile []uint8) error {
 
 	tlsConfig := &tls.Config{RootCAs: x509.NewCertPool()}
 	transport := &http.Transport{TLSClientConfig: tlsConfig}
     var ParsedUrl *url.URL
 
-    if CAFile != "" {
-		// Load our trusted certificate path
-		pemData, err := ioutil.ReadFile(CAFile)
-		if err != nil {
-			panic(err)
-		}
-		ok := tlsConfig.RootCAs.AppendCertsFromPEM(pemData)
+    if len(CAFile) > 0 {
+		ok := tlsConfig.RootCAs.AppendCertsFromPEM(CAFile)
 		if !ok {
 		    logp.Err("Unable to load CA file")
 			panic("Couldn't load PEM data")
@@ -84,28 +79,23 @@ func (bt *Jmxproxybeat) GetJMXObject(u url.URL, name, attribute, key string, CAF
 		panic(err)
     }
 
-    ParsedUrl.Path += managerJmxproxy
+    ParsedUrl.Path += managerJmxproxy + url.QueryEscape(name) + "/attributes"
     parameters := url.Values{}
-
-	parameters.Add("get", name)
 
 	//var jmxObject, 
     var jmxAttribute string
 	if key != "" {
-		//jmxObject = name + attributeURI + attribute + keyURI + key
-		parameters.Add("att", attribute)
+		parameters.Add("attribute", attribute)
 		parameters.Add("key", key)
 		jmxAttribute = attribute + "." + key
 	} else {
-		//jmxObject = name + attributeURI + attribute
-		parameters.Add("att", attribute)
+		parameters.Add("attribute", attribute)
 		jmxAttribute = attribute
 	}
 
 
 	ParsedUrl.RawQuery = parameters.Encode()
-
-	logp.Debug(selector, "Requesting JMX: %s", ParsedUrl.String())  
+	//logp.Info(selector, "Requesting JMX: %s", ParsedUrl.String())  
 
 	req, err := http.NewRequest("GET", ParsedUrl.String(), nil)
 
@@ -141,29 +131,43 @@ func (bt *Jmxproxybeat) GetJMXObject(u url.URL, name, attribute, key string, CAF
 			"hostname":  u.Host,
 		},
 	}
+	
 	bt.events.PublishEvent(event)
-	logp.Info("Event: %+v", event)
+	//logp.Info("Event: %+v", event)
 
 	return nil
 }
 
-func GetJMXValue(responseBody string) (float64, error) {
-	var re *regexp.Regexp
-	var respValue float64
+func GetJMXValue(responseBody string) (string, error) {
 
 	if strings.HasPrefix(responseBody, "Error") {
-		return 0, errors.New(responseBody)
+		return "0", errors.New(responseBody)
 	}
+	//logp.Info("Response Body: %s", responseBody)  
 
-	//TODO: This requires lots of tuning!!
-	re = regexp.MustCompile("\\d+(\\.\\d+)?$")
-	if matches := re.FindStringSubmatch(responseBody); matches != nil {
-		respV, err := strconv.ParseFloat(matches[0], 64)
-		//TODO: test for empty string!
-		if err != nil {
-			return 0.0, err
-		}
-		respValue = respV
-	}
-	return respValue, nil
+    var dat []map[string]interface{}
+
+	if err := json.Unmarshal([]byte(responseBody), &dat); err != nil {
+        panic(err)
+    }
+
+	var beanitem map[string]interface{}
+
+	//TODO: only handles a single bean currently
+    for key := range dat {
+		beanitem = dat[key]["value"].(map[string]interface{})
+        logp.Debug("GetJMXValue", "record endpoint: %s", beanitem["value"])
+    }
+
+    // the Liberty JMX api returns a java type float which needs to converted before being returnd
+    if beanitem["type"] == "java.lang.Double" {
+        logp.Debug("GetJMXValue", "Double type detected, modifying to float64")
+        modstr := strings.Replace(beanitem["value"].(string), "E", "e+", 1)
+        floatcvt, err := strconv.ParseFloat(modstr, 32)
+        if err == nil {
+           return strconv.FormatFloat(floatcvt, 'f', 0, 64), nil
+        }
+     }        
+
+	return beanitem["value"].(string), nil
 }

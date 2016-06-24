@@ -46,7 +46,7 @@ env:
         The hostname as returned by the operating system on which the Beat is
         running.
 
-jmxproxybeat:
+libertyproxybeat:
   type: group
   description: >
     Contains JMX data.
@@ -79,4 +79,4 @@ jmxproxybeat:
 
 sections:
   - ["env", "Common"]
-  - ["jmxproxybeat", "Jmxproxybeat"]
+  - ["libertyproxybeat", "Libertyproxybeat"]

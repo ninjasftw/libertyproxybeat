@@ -5,11 +5,11 @@ import (
 
 	"github.com/elastic/beats/libbeat/beat"
 
-	"github.com/ninjasftw/jmxproxybeat/beater"
+	"github.com/ninjasftw/libertyproxybeat/beater"
 )
 
 func main() {
-	err := beat.Run("jmxproxybeat", "", beater.New())
+	err := beat.Run("libertyproxybeat", "", beater.New())
 	if err != nil {
 		os.Exit(1)
 	}
