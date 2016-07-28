@@ -13,6 +13,7 @@ type LibertyproxybeatConfig struct {
 	URLs           []string             `yaml:"urls"`
 	Authentication AuthenticationConfig `yaml:"authentication"`
 	Beans          []BeanConfig         `yaml:"beans"`
+    Fields         map[string]string          `yaml:"fields"`
 }
 
 type SSLConfig struct {
@@ -23,6 +24,8 @@ type AuthenticationConfig struct {
 	Username string
 	Password string
 }
+
+
 
 type BeanConfig struct {
 	Name       string      `yaml:"name"`

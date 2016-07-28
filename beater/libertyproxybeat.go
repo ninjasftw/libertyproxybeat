@@ -26,6 +26,7 @@ type Libertyproxybeat struct {
     CAFile     []uint8
 	Beans      []Bean
 	events     publisher.Client
+    fields     map[string]string
 }
 
 type Bean struct {
@@ -57,6 +58,10 @@ func (bt *Libertyproxybeat) Config(b *beat.Beat) error {
 func (bt *Libertyproxybeat) Setup(b *beat.Beat) error {
 
 	bt.events = b.Publisher.Connect()
+
+    if len(bt.beatConfig.Libertyproxybeat.Fields) > 0 {
+       fmt.Println("YAY")
+    }
 
 	// Setting default period if not set
 	if bt.beatConfig.Libertyproxybeat.Period == "" {

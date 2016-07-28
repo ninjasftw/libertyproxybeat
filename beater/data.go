@@ -58,6 +58,11 @@ func (bt *Libertyproxybeat) GetJMX(u url.URL) error {
 
 func (bt *Libertyproxybeat) GetJMXObject(u url.URL, name, attribute, key string, CAFile []uint8) error {
 
+
+    for key, value := range bt.beatConfig.Libertyproxybeat.Fields {
+       fmt.Println("Key:", key, "Value:", value)
+    }
+
 	tlsConfig := &tls.Config{RootCAs: x509.NewCertPool()}
 	transport := &http.Transport{TLSClientConfig: tlsConfig}
     var ParsedUrl *url.URL
@@ -124,6 +129,7 @@ func (bt *Libertyproxybeat) GetJMXObject(u url.URL, name, attribute, key string,
 	event := common.MapStr{
 		"@timestamp": common.Time(time.Now()),
 		"type":       "jmx",
+		"fields": bt.beatConfig.Libertyproxybeat.Fields,
 		"bean": common.MapStr{
 			"name":      name,
 			"attribute": jmxAttribute,
