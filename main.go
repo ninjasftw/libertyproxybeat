@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	err := beat.Run("libertyproxybeat", "", beater.New())
+	err := beat.Run("libertyproxybeat", "1.0", beater.New())
 	if err != nil {
 		os.Exit(1)
 	}

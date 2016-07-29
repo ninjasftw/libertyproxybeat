@@ -59,10 +59,6 @@ func (bt *Libertyproxybeat) Setup(b *beat.Beat) error {
 
 	bt.events = b.Publisher.Connect()
 
-    if len(bt.beatConfig.Libertyproxybeat.Fields) > 0 {
-       fmt.Println("YAY")
-    }
-
 	// Setting default period if not set
 	if bt.beatConfig.Libertyproxybeat.Period == "" {
 		bt.beatConfig.Libertyproxybeat.Period = "1s"

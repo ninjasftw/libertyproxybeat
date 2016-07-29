@@ -24,44 +24,30 @@ const (
 
 func (bt *Libertyproxybeat) GetJMX(u url.URL) error {
 	for i := 0; i < len(bt.Beans); i++ {
+
+		//for each bean create a new map to store all the attributes
+        
+		logp.Debug("GetJMX", "name :", bt.Beans[i].Name, "size of attr:", len(bt.Beans[i].Attributes))
+		var attslice = make([]string, len(bt.Beans[i].Attributes))
+		
+
 		for j := 0; j < len(bt.Beans[i].Attributes); j++ {
-			if len(bt.Beans[i].Attributes[j].Keys) > 0 {
-				for k := 0; k < len(bt.Beans[i].Attributes[j].Keys); k++ {
+			//store names into a slice
+			logp.Debug("GetJMX","attr name:", bt.Beans[i].Attributes[j].Name)
+			attslice[j]=bt.Beans[i].Attributes[j].Name
 
-					err := bt.GetJMXObject(u, bt.Beans[i].Name, bt.Beans[i].Attributes[j].Name, bt.Beans[i].Attributes[j].Keys[k], bt.CAFile)
-					if err != nil {
-						logp.Err("Error requesting JMX: %v", err)
-					}
-				}
-			} else {
-				if len(bt.Beans[i].Keys) > 0 {
-					for k := 0; k < len(bt.Beans[i].Keys); k++ {
-
-						err := bt.GetJMXObject(u, bt.Beans[i].Name, bt.Beans[i].Attributes[j].Name, bt.Beans[i].Keys[k], bt.CAFile)
-						if err != nil {
-							logp.Err("Error requesting JMX: %v", err)
-						}
-					}
-
-				} else {
-
-					err := bt.GetJMXObject(u, bt.Beans[i].Name, bt.Beans[i].Attributes[j].Name, "", bt.CAFile)
-					if err != nil {
-						logp.Err("Error requesting JMX: %v", err)
-					}
-				}
-			}
 		}
+
+		err := bt.GetJMXObject(u, bt.Beans[i].Name, attslice, bt.CAFile)
+		if err != nil {
+			logp.Err("Error requesting JMX: %v", err)
+		}
+
 	}
 	return nil
 }
 
-func (bt *Libertyproxybeat) GetJMXObject(u url.URL, name, attribute, key string, CAFile []uint8) error {
-
-
-    for key, value := range bt.beatConfig.Libertyproxybeat.Fields {
-       fmt.Println("Key:", key, "Value:", value)
-    }
+func (bt *Libertyproxybeat) GetJMXObject(u url.URL, name string, attributes []string, CAFile []uint8) error {
 
 	tlsConfig := &tls.Config{RootCAs: x509.NewCertPool()}
 	transport := &http.Transport{TLSClientConfig: tlsConfig}
@@ -87,20 +73,13 @@ func (bt *Libertyproxybeat) GetJMXObject(u url.URL, name, attribute, key string,
     ParsedUrl.Path += managerJmxproxy + url.QueryEscape(name) + "/attributes"
     parameters := url.Values{}
 
-	//var jmxObject, 
-    var jmxAttribute string
-	if key != "" {
-		parameters.Add("attribute", attribute)
-		parameters.Add("key", key)
-		jmxAttribute = attribute + "." + key
-	} else {
-		parameters.Add("attribute", attribute)
-		jmxAttribute = attribute
+	for _, attr := range attributes {
+		parameters.Add("attribute", attr)
 	}
 
 
 	ParsedUrl.RawQuery = parameters.Encode()
-	//logp.Info(selector, "Requesting JMX: %s", ParsedUrl.String())  
+	logp.Debug(selector, "Requesting JMX: %s", ParsedUrl.String())  
 
 	req, err := http.NewRequest("GET", ParsedUrl.String(), nil)
 
@@ -121,19 +100,18 @@ func (bt *Libertyproxybeat) GetJMXObject(u url.URL, name, attribute, key string,
 	scanner := bufio.NewScanner(res.Body)
 	scanner.Scan()
 
-	jmxValue, err := GetJMXValue(scanner.Text())
+	attrmap, err := GetJMXValue(scanner.Text())
 	if err != nil {
 		return err
 	}
 
 	event := common.MapStr{
 		"@timestamp": common.Time(time.Now()),
-		"type":       "jmx",
+		"type":       "lib_jmx",
 		"fields": bt.beatConfig.Libertyproxybeat.Fields,
 		"bean": common.MapStr{
 			"name":      name,
-			"attribute": jmxAttribute,
-			"value":     jmxValue,
+			"attributes":     attrmap,
 			"hostname":  u.Host,
 		},
 	}
@@ -144,14 +122,17 @@ func (bt *Libertyproxybeat) GetJMXObject(u url.URL, name, attribute, key string,
 	return nil
 }
 
-func GetJMXValue(responseBody string) (string, error) {
+func GetJMXValue(responseBody string) (map[string]string, error) {
+
+    responseMap := make(map[string]string)
 
 	if strings.HasPrefix(responseBody, "Error") {
-		return "0", errors.New(responseBody)
+		return responseMap, errors.New(responseBody)
 	}
-	//logp.Info("Response Body: %s", responseBody)  
+	logp.Debug("GetJMXValue", "Response Body: %s", responseBody)  
 
     var dat []map[string]interface{}
+
 
 	if err := json.Unmarshal([]byte(responseBody), &dat); err != nil {
         panic(err)
@@ -163,17 +144,24 @@ func GetJMXValue(responseBody string) (string, error) {
     for key := range dat {
 		beanitem = dat[key]["value"].(map[string]interface{})
         logp.Debug("GetJMXValue", "record endpoint: %s", beanitem["value"])
+
+
+		// the Liberty JMX api returns a java type float which needs to converted before being returnd
+		if beanitem["type"] == "java.lang.Double" {
+		    logp.Debug("GetJMXValue", "Double type detected, modifying to float64")
+		    modstr := strings.Replace(beanitem["value"].(string), "E", "e+", 1)
+		    floatcvt, err := strconv.ParseFloat(modstr, 32)
+		    if err == nil {
+				responseMap[dat[key]["name"].(string)] = strconv.FormatFloat(floatcvt, 'f', 0, 64)
+		    }
+		 } else  {
+			responseMap[dat[key]["name"].(string)] = beanitem["value"].(string)
+         } 
+
     }
 
-    // the Liberty JMX api returns a java type float which needs to converted before being returnd
-    if beanitem["type"] == "java.lang.Double" {
-        logp.Debug("GetJMXValue", "Double type detected, modifying to float64")
-        modstr := strings.Replace(beanitem["value"].(string), "E", "e+", 1)
-        floatcvt, err := strconv.ParseFloat(modstr, 32)
-        if err == nil {
-           return strconv.FormatFloat(floatcvt, 'f', 0, 64), nil
-        }
-     }        
+     
 
-	return beanitem["value"].(string), nil
+	//return beanitem["value"].(string), nil
+	return responseMap, nil
 }
